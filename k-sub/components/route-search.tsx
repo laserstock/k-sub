@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useId, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { buildRouteSlug } from "@/lib/subway/slug";
 import type { SearchOption } from "@/lib/subway/types";
 
@@ -10,6 +17,8 @@ type Props = {
   exampleSlug?: string;
 };
 
+type ActiveField = "from" | "to" | null;
+
 function filterOptions(
   options: SearchOption[],
   query: string,
@@ -17,13 +26,13 @@ function filterOptions(
 ): SearchOption[] {
   const q = query.trim().toLowerCase();
   const pool = kind ? options.filter((o) => o.kind === kind) : options;
-  if (!q) return pool.slice(0, 12);
+  if (!q) return pool.slice(0, 8);
   return pool
     .filter((o) => {
       const hay = `${o.labelEn} ${o.labelKo} ${o.slug}`.toLowerCase();
       return hay.includes(q);
     })
-    .slice(0, 12);
+    .slice(0, 8);
 }
 
 function OptionField({
@@ -35,6 +44,9 @@ function OptionField({
   onPick,
   suggestions,
   inputId,
+  open,
+  onOpen,
+  onClose,
 }: {
   labelEn: string;
   labelKo: string;
@@ -44,10 +56,15 @@ function OptionField({
   onPick: (option: SearchOption) => void;
   suggestions: SearchOption[];
   inputId: string;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }) {
   const listId = `${inputId}-list`;
+  const showList = open && suggestions.length > 0;
+
   return (
-    <div className="relative min-w-0 flex-1">
+    <div className="min-w-0 flex-1">
       <label htmlFor={inputId} className="block text-sm font-medium text-zinc-800">
         {labelEn}
         <span className="ml-1.5 font-normal text-zinc-500">{labelKo}</span>
@@ -57,18 +74,29 @@ function OptionField({
         type="text"
         autoComplete="off"
         role="combobox"
-        aria-expanded={suggestions.length > 0}
+        aria-expanded={showList}
         aria-controls={listId}
+        aria-autocomplete="list"
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          onOpen();
+        }}
+        onFocus={() => onOpen()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
         className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-900/10 placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:ring-2"
       />
-      {suggestions.length > 0 && value.trim() ? (
+      {showList ? (
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
+          className="relative z-10 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
         >
           {suggestions.map((option) => (
             <li key={option.id} role="option">
@@ -76,7 +104,10 @@ function OptionField({
                 type="button"
                 className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-zinc-50"
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onPick(option)}
+                onClick={() => {
+                  onPick(option);
+                  onClose();
+                }}
               >
                 <span className="text-sm font-medium text-zinc-900">
                   {option.labelEn}
@@ -98,10 +129,12 @@ function OptionField({
 export function RouteSearch({ options, exampleSlug }: Props) {
   const router = useRouter();
   const baseId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
   const [fromQuery, setFromQuery] = useState("");
   const [toQuery, setToQuery] = useState("");
   const [fromOption, setFromOption] = useState<SearchOption | null>(null);
   const [toOption, setToOption] = useState<SearchOption | null>(null);
+  const [activeField, setActiveField] = useState<ActiveField>(null);
   const [error, setError] = useState<string | null>(null);
 
   const stationOptions = useMemo(
@@ -118,6 +151,30 @@ export function RouteSearch({ options, exampleSlug }: Props) {
     () => filterOptions(options, toQuery),
     [options, toQuery],
   );
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent | TouchEvent) {
+      const root = formRef.current;
+      if (!root) return;
+      const target = event.target as Node | null;
+      if (target && !root.contains(target)) {
+        setActiveField(null);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setActiveField(null);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   function resolveOption(
     query: string,
@@ -144,6 +201,7 @@ export function RouteSearch({ options, exampleSlug }: Props) {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setActiveField(null);
     setError(null);
     const from = resolveOption(fromQuery, fromOption, true);
     const to = resolveOption(toQuery, toOption, false);
@@ -165,8 +223,9 @@ export function RouteSearch({ options, exampleSlug }: Props) {
 
   return (
     <form
+      ref={formRef}
       onSubmit={onSubmit}
-      className="rounded-2xl bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-6"
+      className="overflow-visible rounded-2xl bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-6"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <OptionField
@@ -184,6 +243,9 @@ export function RouteSearch({ options, exampleSlug }: Props) {
             setFromQuery(option.labelEn);
           }}
           suggestions={fromSuggestions}
+          open={activeField === "from"}
+          onOpen={() => setActiveField("from")}
+          onClose={() => setActiveField(null)}
         />
         <OptionField
           inputId={`${baseId}-to`}
@@ -200,6 +262,9 @@ export function RouteSearch({ options, exampleSlug }: Props) {
             setToQuery(option.labelEn);
           }}
           suggestions={toSuggestions}
+          open={activeField === "to"}
+          onOpen={() => setActiveField("to")}
+          onClose={() => setActiveField(null)}
         />
       </div>
 
@@ -209,10 +274,10 @@ export function RouteSearch({ options, exampleSlug }: Props) {
         </p>
       ) : null}
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-20 mt-5 flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
-          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+          className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 sm:w-auto"
         >
           Find route
           <span className="ml-2 font-normal text-zinc-300">길찾기</span>
