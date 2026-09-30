@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "지하철 출구 정보",
-  description: "Supabase subway_exits 테이블의 역명과 출구별 주요시설명",
+  title: "Seoul Subway Exit Guide",
+  description:
+    "Korean and English guide to nearby landmarks at Seoul subway exits",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-zinc-900">
+      <body className="min-h-full flex flex-col bg-zinc-100 text-zinc-900">
         {children}
       </body>
     </html>

@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# k-sub — Seoul Subway Exit Guide
 
-## Getting Started
+Next.js (App Router) + Tailwind + Supabase로 `subway_exits`의 역명·출구 시설을 **한국어 + 영어**로 보여 줍니다 (관광객용).
 
-First, run the development server:
+## 준비
+
+1. 이 폴더(`k-sub`)에서 의존성을 설치합니다.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd k-sub
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. `.env.local`을 만듭니다 (이미 gitignore 됨).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co/
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Supabase SQL Editor에서 anon 읽기 권한이 없으면 아래를 실행합니다.
 
-## Learn More
+```sql
+GRANT SELECT ON public.subway_exits TO anon;
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 실행
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run dev -- -p 43127
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+브라우저에서 [http://127.0.0.1:43127](http://127.0.0.1:43127) 을 엽니다.
