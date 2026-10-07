@@ -2,21 +2,23 @@ import Link from "next/link";
 import { ExitCard } from "@/components/exit-card";
 import { RouteSearch } from "@/components/route-search";
 import {
-  buildSearchOptions,
-  fetchExitCatalog,
+  fetchAllStationOptions,
+  fetchLandmarkOptions,
   fetchPopularExits,
 } from "@/lib/subway/data";
 import { buildRouteSlug } from "@/lib/subway/slug";
 
 export default async function Home() {
-  const [popular, catalog] = await Promise.all([
+  const [popular, stationResult, landmarkResult] = await Promise.all([
     fetchPopularExits(8),
-    fetchExitCatalog(),
+    fetchAllStationOptions(),
+    fetchLandmarkOptions(),
   ]);
 
-  const error = popular.error || catalog.error;
-  const options = buildSearchOptions(catalog.rows);
-  const exampleSlug = buildRouteSlug("Jonggak", "Seoul Station");
+  const error =
+    popular.error || stationResult.error || landmarkResult.error;
+  const options = [...stationResult.stations, ...landmarkResult.landmarks];
+  const exampleSlug = buildRouteSlug("Jonggak", "Seoul Station", "종각", "서울역");
 
   return (
     <main className="min-h-full flex-1 bg-zinc-100">
@@ -31,6 +33,11 @@ export default async function Home() {
           </p>
           <p className="mt-1 text-sm text-zinc-500">
             출발역과 도착지를 검색하면 출구 안내 페이지로 이동합니다
+            {!error && stationResult.distinctCount > 0 ? (
+              <span className="ml-1 text-zinc-400">
+                · {stationResult.distinctCount} stations
+              </span>
+            ) : null}
           </p>
         </header>
 

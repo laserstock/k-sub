@@ -26,13 +26,13 @@ function filterOptions(
 ): SearchOption[] {
   const q = query.trim().toLowerCase();
   const pool = kind ? options.filter((o) => o.kind === kind) : options;
-  if (!q) return pool.slice(0, 8);
+  if (!q) return pool.slice(0, 12);
   return pool
     .filter((o) => {
       const hay = `${o.labelEn} ${o.labelKo} ${o.slug}`.toLowerCase();
-      return hay.includes(q);
+      return hay.includes(q) || o.labelKo.includes(query.trim());
     })
-    .slice(0, 8);
+    .slice(0, 20);
 }
 
 function OptionField({

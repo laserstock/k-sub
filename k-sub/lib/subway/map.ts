@@ -70,7 +70,8 @@ export function mapExitRows(data: Record<string, unknown>[] | null): ExitRow[] {
     const stationEnRaw = pickField(row, STATION_EN_KEYS);
     return {
       stationKo,
-      stationEn: englishStationName(stationKo, stationEnRaw),
+      stationEn: englishStationName(stationKo, stationEnRaw) || stationKo,
+
       facilityKo: pickField(row, FACILITY_KO_KEYS),
       facilityEn: pickField(row, FACILITY_EN_KEYS),
       exitNumber: pickField(row, EXIT_NUMBER_KEYS),
