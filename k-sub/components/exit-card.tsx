@@ -1,3 +1,4 @@
+import { CopyKoreanButton } from "@/components/copy-korean-button";
 import { displayValue } from "@/lib/subway/map";
 import type { ExitRow } from "@/lib/subway/types";
 
@@ -44,6 +45,11 @@ export function ExitCard({ row }: { row: ExitRow }) {
             <p className="mt-0.5 text-sm text-zinc-600">
               {displayValue(row.facilityKo)}
             </p>
+            {row.facilityKo ? (
+              <div className="mt-2">
+                <CopyKoreanButton koreanName={row.facilityKo} />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
