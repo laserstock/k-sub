@@ -1,12 +1,59 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { formatSupabaseError, mapExitRows } from "./map";
-import { canonicalizeSlug, slugify } from "./slug";
+import { englishStationName } from "./station-en";
+import { canonicalizeSlug, stationSlug } from "./slug";
 import type { ExitRow, SearchOption } from "./types";
 
 const SELECT_COLUMNS =
   "역명,역명_EN,출구별주요시설명,출구시설_EN,출구번호,노선명";
 
-async function fetchRawExits(limit: number): Promise<{
+const PAGE_SIZE = 1000;
+
+async function fetchRawExitsPage(
+  from: number,
+  to: number,
+): Promise<{ rows: Record<string, unknown>[]; error: string | null }> {
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("subway_exits")
+      .select(SELECT_COLUMNS)
+      .range(from, to);
+
+    if (error) {
+      return {
+        rows: [],
+        error: formatSupabaseError(error.message, error.code),
+      };
+    }
+
+    return { rows: (data ?? []) as Record<string, unknown>[], error: null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { rows: [], error: formatSupabaseError(message) };
+  }
+}
+
+/** Paginate through every subway_exits row (PostgREST caps ~1000/request). */
+export async function fetchExitCatalog(): Promise<{
+  rows: ExitRow[];
+  error: string | null;
+}> {
+  const all: Record<string, unknown>[] = [];
+  let from = 0;
+
+  while (true) {
+    const { rows, error } = await fetchRawExitsPage(from, from + PAGE_SIZE - 1);
+    if (error) return { rows: [], error };
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return { rows: mapExitRows(all), error: null };
+}
+
+export async function fetchPopularExits(limit = 8): Promise<{
   rows: ExitRow[];
   error: string | null;
 }> {
@@ -34,23 +81,15 @@ async function fetchRawExits(limit: number): Promise<{
   }
 }
 
-export async function fetchPopularExits(limit = 8) {
-  return fetchRawExits(limit);
-}
-
-export async function fetchExitCatalog(limit = 2500) {
-  return fetchRawExits(limit);
-}
-
 export function buildSearchOptions(rows: ExitRow[]): SearchOption[] {
   const stations = new Map<string, SearchOption>();
   const landmarks = new Map<string, SearchOption>();
 
   for (const row of rows) {
-    const stationEn = row.stationEn || row.stationKo;
     const stationKo = row.stationKo || row.stationEn;
+    const stationEn = englishStationName(row.stationKo, row.stationEn);
     if (stationEn || stationKo) {
-      const slug = canonicalizeSlug(slugify(stationEn || stationKo));
+      const slug = stationSlug(stationEn, stationKo);
       if (slug && !stations.has(slug)) {
         stations.set(slug, {
           id: `station:${slug}`,
@@ -65,8 +104,7 @@ export function buildSearchOptions(rows: ExitRow[]): SearchOption[] {
     const facilityEn = row.facilityEn || row.facilityKo;
     const facilityKo = row.facilityKo || row.facilityEn;
     if (facilityEn || facilityKo) {
-      const slug = canonicalizeSlug(slugify(facilityEn || facilityKo));
-      // Skip very short / noisy facility slugs
+      const slug = stationSlug(facilityEn, facilityKo);
       if (slug && slug.length >= 3 && !landmarks.has(slug)) {
         landmarks.set(slug, {
           id: `landmark:${slug}`,
@@ -74,7 +112,7 @@ export function buildSearchOptions(rows: ExitRow[]): SearchOption[] {
           labelEn: facilityEn || facilityKo,
           labelKo: facilityKo || facilityEn,
           slug,
-          stationEn: row.stationEn || undefined,
+          stationEn: englishStationName(row.stationKo, row.stationEn) || undefined,
           stationKo: row.stationKo || undefined,
         });
       }
@@ -83,10 +121,10 @@ export function buildSearchOptions(rows: ExitRow[]): SearchOption[] {
 
   return [
     ...[...stations.values()].sort((a, b) =>
-      a.labelEn.localeCompare(b.labelEn),
+      a.labelEn.localeCompare(b.labelEn, "en"),
     ),
     ...[...landmarks.values()].sort((a, b) =>
-      a.labelEn.localeCompare(b.labelEn),
+      a.labelEn.localeCompare(b.labelEn, "en"),
     ),
   ];
 }
@@ -95,7 +133,7 @@ export function findOptionBySlug(
   options: SearchOption[],
   slug: string,
 ): SearchOption | undefined {
-  const key = canonicalizeSlug(slug);
+  const key = canonicalizeSlug(slug) || slug;
   return (
     options.find((o) => o.kind === "station" && o.slug === key) ??
     options.find((o) => o.slug === key)
@@ -109,24 +147,30 @@ export function exitsForDestination(
   if (destination.kind === "station") {
     const slug = destination.slug;
     return rows.filter((row) => {
-      const stationSlug = canonicalizeSlug(
-        slugify(row.stationEn || row.stationKo),
-      );
-      return stationSlug === slug;
+      const en = englishStationName(row.stationKo, row.stationEn);
+      const stationSlugValue = stationSlug(en, row.stationKo || row.stationEn);
+      return stationSlugValue === slug;
     });
   }
 
   const landmarkSlug = destination.slug;
   return rows.filter((row) => {
-    const facSlug = canonicalizeSlug(slugify(row.facilityEn || row.facilityKo));
+    const facSlug = stationSlug(
+      row.facilityEn || row.facilityKo,
+      row.facilityKo || row.facilityEn,
+    );
     return facSlug === landmarkSlug;
   });
 }
 
-export function exitsForStationSlug(rows: ExitRow[], stationSlug: string): ExitRow[] {
-  const key = canonicalizeSlug(stationSlug);
+export function exitsForStationSlug(
+  rows: ExitRow[],
+  stationSlugValue: string,
+): ExitRow[] {
+  const key = canonicalizeSlug(stationSlugValue) || stationSlugValue;
   return rows.filter((row) => {
-    const slug = canonicalizeSlug(slugify(row.stationEn || row.stationKo));
+    const en = englishStationName(row.stationKo, row.stationEn);
+    const slug = stationSlug(en, row.stationKo || row.stationEn);
     return slug === key;
   });
 }

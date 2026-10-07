@@ -217,7 +217,12 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       );
       return;
     }
-    const slug = buildRouteSlug(from.labelEn, to.labelEn);
+    const slug = buildRouteSlug(
+      from.labelEn,
+      to.labelEn,
+      from.labelKo,
+      to.labelKo,
+    );
     router.push(`/routes/${slug}`);
   }
 

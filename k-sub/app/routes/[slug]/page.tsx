@@ -97,7 +97,7 @@ export default async function RoutePage({ params }: PageProps) {
     notFound();
   }
 
-  const { rows, error } = await fetchExitCatalog(2500);
+  const { rows, error } = await fetchExitCatalog();
   const options = buildSearchOptions(rows);
   const from = findOptionBySlug(options, parts.fromSlug);
   const to = findOptionBySlug(options, parts.toSlug);

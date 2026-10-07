@@ -11,7 +11,7 @@ import { buildRouteSlug } from "@/lib/subway/slug";
 export default async function Home() {
   const [popular, catalog] = await Promise.all([
     fetchPopularExits(8),
-    fetchExitCatalog(2000),
+    fetchExitCatalog(),
   ]);
 
   const error = popular.error || catalog.error;

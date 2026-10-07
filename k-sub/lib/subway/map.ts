@@ -1,3 +1,4 @@
+import { englishStationName } from "./station-en";
 import type { ExitRow } from "./types";
 
 const STATION_KO_KEYS = [
@@ -64,14 +65,18 @@ export function pickField(
 
 export function mapExitRows(data: Record<string, unknown>[] | null): ExitRow[] {
   if (!data?.length) return [];
-  return data.map((row) => ({
-    stationKo: pickField(row, STATION_KO_KEYS),
-    stationEn: pickField(row, STATION_EN_KEYS),
-    facilityKo: pickField(row, FACILITY_KO_KEYS),
-    facilityEn: pickField(row, FACILITY_EN_KEYS),
-    exitNumber: pickField(row, EXIT_NUMBER_KEYS),
-    lineKo: pickField(row, LINE_KO_KEYS),
-  }));
+  return data.map((row) => {
+    const stationKo = pickField(row, STATION_KO_KEYS);
+    const stationEnRaw = pickField(row, STATION_EN_KEYS);
+    return {
+      stationKo,
+      stationEn: englishStationName(stationKo, stationEnRaw),
+      facilityKo: pickField(row, FACILITY_KO_KEYS),
+      facilityEn: pickField(row, FACILITY_EN_KEYS),
+      exitNumber: pickField(row, EXIT_NUMBER_KEYS),
+      lineKo: pickField(row, LINE_KO_KEYS),
+    };
+  });
 }
 
 export function formatSupabaseError(message: string, code?: string): string {
