@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type ReactNode,
 } from "react";
 import { buildRouteSlug } from "@/lib/subway/slug";
 import type { SearchOption } from "@/lib/subway/types";
@@ -18,6 +19,17 @@ type Props = {
 };
 
 type ActiveField = "from" | "to" | null;
+
+/** Shown when To is focused and empty — resolve against DB options when possible. */
+const TO_RECOMMENDATIONS = [
+  "Myeongdong Street",
+  "N Seoul Tower",
+  "Hongdae",
+  "Gyeongbokgung Palace",
+  "Namdaemun Market",
+  "Insadong Street",
+  "Changdeokgung Palace",
+] as const;
 
 function filterOptions(
   options: SearchOption[],
@@ -35,6 +47,65 @@ function filterOptions(
     .slice(0, 20);
 }
 
+function resolveRecommendation(
+  label: string,
+  options: SearchOption[],
+): SearchOption | null {
+  const q = label.toLowerCase();
+  return (
+    options.find((o) => o.labelEn.toLowerCase() === q) ??
+    options.find((o) => o.labelEn.toLowerCase().startsWith(q)) ??
+    options.find((o) => o.labelEn.toLowerCase().includes(q)) ??
+    options.find((o) => o.slug.includes(q.replace(/\s+/g, "-"))) ??
+    null
+  );
+}
+
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(q.toLowerCase());
+  if (idx < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <strong className="font-bold text-zinc-950">
+        {text.slice(idx, idx + q.length)}
+      </strong>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
+
+function SuggestionList({
+  id,
+  open,
+  children,
+}: {
+  id: string;
+  open: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      }`}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <ul
+          id={id}
+          role="listbox"
+          className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
+        >
+          {children}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function OptionField({
   labelEn,
   labelKo,
@@ -47,6 +118,9 @@ function OptionField({
   open,
   onOpen,
   onClose,
+  queryForHighlight,
+  emptyRecommendations,
+  onPickRecommendation,
 }: {
   labelEn: string;
   labelKo: string;
@@ -59,9 +133,18 @@ function OptionField({
   open: boolean;
   onOpen: () => void;
   onClose: () => void;
+  queryForHighlight: string;
+  emptyRecommendations?: readonly string[];
+  onPickRecommendation?: (label: string) => void;
 }) {
   const listId = `${inputId}-list`;
-  const showList = open && suggestions.length > 0;
+  const showEmptyRecs =
+    open &&
+    !value.trim() &&
+    !!emptyRecommendations?.length &&
+    !!onPickRecommendation;
+  const showSuggestions = open && value.trim().length > 0 && suggestions.length > 0;
+  const showList = showEmptyRecs || showSuggestions;
 
   return (
     <div className="min-w-0 flex-1">
@@ -90,38 +173,71 @@ function OptionField({
             onClose();
           }
         }}
-        className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-900/10 placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:ring-2"
+        className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-900/10 transition placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:ring-2"
       />
-      {showList ? (
-        <ul
-          id={listId}
-          role="listbox"
-          className="relative z-10 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
-        >
-          {suggestions.map((option) => (
-            <li key={option.id} role="option">
-              <button
-                type="button"
-                className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-zinc-50"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onPick(option);
-                  onClose();
-                }}
-              >
-                <span className="text-sm font-medium text-zinc-900">
-                  {option.labelEn}
-                </span>
-                <span className="text-xs text-zinc-500">
-                  {option.labelKo}
-                  <span className="mx-1 text-zinc-300">·</span>
-                  {option.kind === "station" ? "Station" : "Landmark"}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+
+      <SuggestionList id={listId} open={showList}>
+        {showEmptyRecs
+          ? emptyRecommendations.map((label) => (
+              <li key={label} role="option">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onPickRecommendation(label);
+                    onClose();
+                  }}
+                >
+                  <span className="text-base leading-none" aria-hidden>
+                    📍
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-zinc-900">
+                      {label}
+                    </span>
+                    <span className="block text-xs text-zinc-500">
+                      Popular landmark
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))
+          : null}
+
+        {showSuggestions
+          ? suggestions.map((option) => (
+              <li key={option.id} role="option">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onPick(option);
+                    onClose();
+                  }}
+                >
+                  <span className="text-base leading-none" aria-hidden>
+                    {option.kind === "station" ? "🚇" : "📍"}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-zinc-900">
+                      <HighlightMatch
+                        text={option.labelEn}
+                        query={queryForHighlight}
+                      />
+                    </span>
+                    <span className="block text-xs text-zinc-500">
+                      {option.labelKo}
+                      <span className="mx-1 text-zinc-300">·</span>
+                      {option.kind === "station" ? "Station" : "Landmark"}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))
+          : null}
+      </SuggestionList>
     </div>
   );
 }
@@ -157,15 +273,11 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       const root = formRef.current;
       if (!root) return;
       const target = event.target as Node | null;
-      if (target && !root.contains(target)) {
-        setActiveField(null);
-      }
+      if (target && !root.contains(target)) setActiveField(null);
     }
-
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setActiveField(null);
     }
-
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("touchstart", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -199,12 +311,35 @@ export function RouteSearch({ options, exampleSlug }: Props) {
     );
   }
 
+  function swapEnds() {
+    setFromQuery(toQuery);
+    setToQuery(fromQuery);
+    setFromOption(toOption);
+    setToOption(fromOption);
+    setError(null);
+    setActiveField(null);
+  }
+
+  function pickToRecommendation(label: string) {
+    const matched = resolveRecommendation(label, options);
+    if (matched) {
+      setToOption(matched);
+      setToQuery(matched.labelEn);
+    } else {
+      setToOption(null);
+      setToQuery(label);
+    }
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setActiveField(null);
     setError(null);
     const from = resolveOption(fromQuery, fromOption, true);
-    const to = resolveOption(toQuery, toOption, false);
+    let to = resolveOption(toQuery, toOption, false);
+    if (!to && toQuery.trim()) {
+      to = resolveRecommendation(toQuery.trim(), options);
+    }
     if (!from || !to) {
       setError(
         "Please choose a departure station and a destination from the suggestions. / 출발역과 도착지를 목록에서 선택해 주세요.",
@@ -232,7 +367,7 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       onSubmit={onSubmit}
       className="overflow-visible rounded-2xl bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-6"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-2">
         <OptionField
           inputId={`${baseId}-from`}
           labelEn="From (Departure Station)"
@@ -251,12 +386,31 @@ export function RouteSearch({ options, exampleSlug }: Props) {
           open={activeField === "from"}
           onOpen={() => setActiveField("from")}
           onClose={() => setActiveField(null)}
+          queryForHighlight={fromQuery}
         />
+
+        <div className="flex items-center justify-center sm:mt-8 sm:px-1">
+          <button
+            type="button"
+            onClick={swapEnds}
+            aria-label="Swap From and To"
+            title="Swap From and To"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-lg text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+          >
+            <span aria-hidden className="sm:hidden">
+              ⇅
+            </span>
+            <span aria-hidden className="hidden sm:inline">
+              ⇆
+            </span>
+          </button>
+        </div>
+
         <OptionField
           inputId={`${baseId}-to`}
           labelEn="To (Destination / Landmark)"
           labelKo="도착 / 랜드마크"
-          placeholder="e.g. Seoul Station"
+          placeholder="e.g. Seoul Station or N Seoul Tower"
           value={toQuery}
           onChange={(next) => {
             setToQuery(next);
@@ -270,6 +424,9 @@ export function RouteSearch({ options, exampleSlug }: Props) {
           open={activeField === "to"}
           onOpen={() => setActiveField("to")}
           onClose={() => setActiveField(null)}
+          queryForHighlight={toQuery}
+          emptyRecommendations={TO_RECOMMENDATIONS}
+          onPickRecommendation={pickToRecommendation}
         />
       </div>
 

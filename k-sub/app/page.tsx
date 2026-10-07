@@ -20,7 +20,12 @@ export default async function Home() {
   const error =
     popular.error || stationResult.error || landmarkResult.error;
   const options = [...stationResult.stations, ...landmarkResult.landmarks];
-  const exampleSlug = buildRouteSlug("Jonggak", "Seoul Station", "종각", "서울역");
+  const exampleSlug = buildRouteSlug(
+    "Jonggak",
+    "Seoul Station",
+    "종각",
+    "서울역",
+  );
 
   return (
     <main className="min-h-full flex-1 bg-zinc-100">
@@ -30,11 +35,11 @@ export default async function Home() {
             Seoul Subway Exit Guide
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-600 sm:text-base">
-            Search how to go from one station to another — then see which exit
-            to use near your destination.
+            Choose a departure station and a destination — stations or landmarks
+            like N Seoul Tower — then find your route.
           </p>
           <p className="mt-1 text-sm text-zinc-500">
-            출발역과 도착지를 검색하면 출구 안내 페이지로 이동합니다
+            출발역과 도착지(역·랜드마크)를 고르면 안내 페이지로 이동합니다
             {!error && stationResult.distinctCount > 0 ? (
               <span className="ml-1 text-zinc-400">
                 · {stationResult.distinctCount} stations

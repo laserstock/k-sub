@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Seoul Subway Exit Guide",
   description:
-    "Korean and English guide to nearby landmarks at Seoul subway exits",
+    "From/To Seoul subway search with station and landmark exits — for foreign visitors",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
