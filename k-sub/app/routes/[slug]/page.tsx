@@ -13,6 +13,8 @@ import {
 import { parseRouteSlug, titleFromSlug } from "@/lib/subway/slug";
 import type { ExitRow, SearchOption } from "@/lib/subway/types";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };

@@ -8,6 +8,8 @@ import {
 } from "@/lib/subway/data";
 import { buildRouteSlug } from "@/lib/subway/slug";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [popular, stationResult, landmarkResult] = await Promise.all([
     fetchPopularExits(8),
