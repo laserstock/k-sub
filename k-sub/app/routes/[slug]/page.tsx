@@ -222,7 +222,7 @@ export default async function RoutePage({ params }: PageProps) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[var(--maps)] px-5 py-4 text-[15px] font-bold text-white shadow-[0_14px_36px_-14px_rgba(26,115,232,0.7)] transition hover:bg-[var(--maps-hover)] active:scale-[0.99] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--maps)_40%,transparent)]"
+            className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#1a73e8] px-5 py-4 text-[15px] font-bold text-white shadow-[0_14px_36px_-14px_rgba(26,115,232,0.7)] transition hover:bg-[#1558b0] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40"
           >
             Open in Google Maps
             <span className="font-medium text-white/80">

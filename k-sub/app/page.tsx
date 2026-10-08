@@ -30,7 +30,7 @@ export default async function Home() {
   return (
     <main className="min-h-full flex-1">
       {/* First viewport: one composition — brand + promise + search */}
-      <section className="relative mx-auto flex w-full max-w-3xl flex-col px-5 pb-10 pt-12 sm:px-8 sm:pb-14 sm:pt-16">
+      <section className="relative mx-auto flex min-h-[100svh] w-full max-w-3xl flex-col justify-center px-5 py-12 sm:px-8 sm:py-16">
         <p className="anim-rise text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--rail)]">
           For visitors · 외국인 출구 안내
         </p>

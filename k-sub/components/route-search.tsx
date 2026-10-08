@@ -445,10 +445,10 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       <div className="relative z-20 mt-5 flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--rail)] px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-[var(--rail-hover)] active:scale-[0.99] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_35%,transparent)] sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-[#0a7a6e] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_-12px_rgba(10,122,110,0.7)] transition hover:bg-[#08665c] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a7a6e]/40 sm:w-auto"
         >
           Find your exit
-          <span className="ml-2 font-medium text-white/75">출구 찾기</span>
+          <span className="ml-2 font-medium text-white/80">출구 찾기</span>
         </button>
         {exampleSlug ? (
           <p className="text-xs text-[var(--muted)]">
