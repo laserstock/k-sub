@@ -4,14 +4,13 @@ import { notFound } from "next/navigation";
 import { ExitCard } from "@/components/exit-card";
 import {
   buildSearchOptions,
-  exitsForDestination,
   fetchExitCatalog,
   findOptionBySlug,
-  uniqueExitHighlights,
+  resolveExitGuide,
 } from "@/lib/subway/data";
 import { googleMapsDirectionsUrl } from "@/lib/subway/google-maps";
 import { parseRouteSlug, titleFromSlug } from "@/lib/subway/slug";
-import type { ExitRow, SearchOption } from "@/lib/subway/types";
+import type { SearchOption } from "@/lib/subway/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,25 +18,14 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-function destinationStationLabel(dest: SearchOption, exits: ExitRow[]): {
-  en: string;
-  ko: string;
-} {
-  if (dest.kind === "station") {
-    return { en: dest.labelEn, ko: dest.labelKo };
-  }
-  const first = exits[0];
-  return {
-    en: dest.stationEn || first?.stationEn || dest.labelEn,
-    ko: dest.stationKo || first?.stationKo || dest.labelKo,
-  };
-}
-
-function mapsDestinationLabel(to: SearchOption, arrival: { en: string }): string {
+function mapsDestinationLabel(
+  to: SearchOption,
+  arrivalEn: string,
+): string {
   if (to.kind === "landmark") {
-    return to.labelEn || to.labelKo || arrival.en;
+    return to.labelEn || to.labelKo || arrivalEn;
   }
-  return `${arrival.en} Station`;
+  return `${arrivalEn} Station`;
 }
 
 export async function generateMetadata({
@@ -102,37 +90,57 @@ export default async function RoutePage({ params }: PageProps) {
     );
   }
 
-  const destExits = exitsForDestination(rows, to);
-  const arrival = destinationStationLabel(to, destExits);
-  const destHighlights = uniqueExitHighlights(destExits, 10);
-  const best = destHighlights[0];
-  const bestExit = best?.exitNumber?.trim() || "—";
-  const landmarkLabel =
-    to.kind === "landmark" ? to.labelEn : best?.facilityEn || to.labelEn;
+  const guide = resolveExitGuide(rows, to);
+  const bestExit = guide.best?.exitNumber?.trim() || "—";
+  const heroExit =
+    bestExit === "—" ? "Exit —" : `Exit ${bestExit}`;
+  const landmarkForGuide =
+    to.kind === "landmark"
+      ? guide.landmarkLabelEn || to.labelEn
+      : guide.landmarkLabelEn;
 
   const mapsUrl = googleMapsDirectionsUrl(
     `${from.labelEn} Station`,
-    mapsDestinationLabel(to, arrival),
+    mapsDestinationLabel(to, guide.arrivalEn),
   );
+
+  const lockedKey = guide.best
+    ? `${guide.best.stationKo}|${guide.best.exitNumber}|${guide.best.facilityEn}|${guide.best.facilityKo}`
+    : null;
 
   return (
     <main className="min-h-full flex-1 bg-zinc-100">
-      <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
         <p className="text-sm text-zinc-500">
           <Link href="/" className="font-medium text-zinc-800 hover:underline">
             ← Back to search
           </Link>
         </p>
 
-        <header className="mt-5 mb-6 sm:mb-8">
+        {/* One clear answer — first screen */}
+        <header className="mt-5 mb-5 sm:mb-7">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Seoul subway exit guide
           </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-            Exit for {to.labelEn}
+          <h1 className="mt-3 text-[1.65rem] font-bold leading-tight tracking-tight text-zinc-900 sm:text-4xl sm:leading-tight">
+            Get off at {guide.arrivalEn}{" "}
+            <span className="text-zinc-400" aria-hidden>
+              →
+            </span>{" "}
+            {heroExit}
           </h1>
+          {to.kind === "landmark" ? (
+            <p className="mt-2 text-base font-medium text-zinc-700 sm:text-lg">
+              for {to.labelEn}
+            </p>
+          ) : landmarkForGuide ? (
+            <p className="mt-2 text-sm text-zinc-600 sm:text-base">
+              near {landmarkForGuide}
+            </p>
+          ) : null}
           <p className="mt-2 text-sm text-zinc-500">
-            From {from.labelEn} ({from.labelKo}) → {to.labelKo}
+            From {from.labelEn} ({from.labelKo})
+            {to.labelKo ? ` · ${to.labelKo}` : null}
           </p>
         </header>
 
@@ -157,26 +165,30 @@ export default async function RoutePage({ params }: PageProps) {
                 Destination Station · 도착역
               </dt>
               <dd className="mt-1 text-2xl font-bold text-zinc-900">
-                {arrival.en}
+                {guide.arrivalEn}
               </dd>
-              <dd className="text-sm text-zinc-500">{arrival.ko}</dd>
+              <dd className="text-sm text-zinc-500">{guide.arrivalKo}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                Best Exit for {landmarkLabel} · 추천 출구
+                Best Exit
+                {landmarkForGuide ? ` for ${landmarkForGuide}` : ""} · 추천
+                출구
               </dt>
-              <dd className="mt-1 flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-zinc-900">
-                  {bestExit === "—" ? "—" : `Exit ${bestExit}`}
-                </span>
-                {best?.facilityEn && to.kind === "station" ? (
-                  <span className="text-sm text-zinc-500">
-                    ({best.facilityEn})
-                  </span>
-                ) : null}
+              <dd className="mt-1 text-3xl font-bold text-zinc-900">
+                {bestExit === "—" ? "—" : `Exit ${bestExit}`}
               </dd>
-              {best?.facilityKo ? (
-                <dd className="mt-0.5 text-sm text-zinc-500">{best.facilityKo}</dd>
+              {to.kind === "landmark" && guide.landmarkLabelKo ? (
+                <dd className="mt-0.5 text-sm text-zinc-500">
+                  {guide.landmarkLabelKo}
+                </dd>
+              ) : guide.best?.facilityKo && to.kind === "station" ? (
+                <dd className="mt-0.5 text-sm text-zinc-500">
+                  {guide.best.facilityEn}
+                  {guide.best.facilityKo
+                    ? ` · ${guide.best.facilityKo}`
+                    : null}
+                </dd>
               ) : null}
             </div>
           </dl>
@@ -201,7 +213,7 @@ export default async function RoutePage({ params }: PageProps) {
           </h2>
           <p className="mt-1 text-sm text-zinc-500">도착지 근처 추천 출구</p>
 
-          {!error && destHighlights.length === 0 ? (
+          {!error && guide.highlights.length === 0 ? (
             <div className="mt-4 rounded-xl bg-white px-4 py-8 text-center shadow-sm">
               <p className="text-sm font-medium text-zinc-700">
                 No exit rows matched this destination yet.
@@ -212,14 +224,20 @@ export default async function RoutePage({ params }: PageProps) {
             </div>
           ) : null}
 
-          {destHighlights.length > 0 ? (
-            <ul className="mt-4 flex flex-col gap-3 sm:gap-4">
-              {destHighlights.map((row, index) => (
-                <ExitCard
-                  key={`${row.stationKo}-${row.facilityKo}-${row.exitNumber}-${index}`}
-                  row={row}
-                />
-              ))}
+          {guide.highlights.length > 0 ? (
+            <ul className="mt-5 flex flex-col gap-4 sm:gap-5">
+              {guide.highlights.map((row, index) => {
+                const key = `${row.stationKo}|${row.exitNumber}|${row.facilityEn}|${row.facilityKo}`;
+                const isLocked =
+                  guide.locked && lockedKey !== null && key === lockedKey;
+                return (
+                  <ExitCard
+                    key={`${key}-${index}`}
+                    row={row}
+                    highlighted={isLocked || (!guide.locked && index === 0)}
+                  />
+                );
+              })}
             </ul>
           ) : null}
         </section>

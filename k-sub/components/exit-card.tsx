@@ -2,13 +2,35 @@ import { CopyKoreanButton } from "@/components/copy-korean-button";
 import { displayValue } from "@/lib/subway/map";
 import type { ExitRow } from "@/lib/subway/types";
 
-export function ExitCard({ row }: { row: ExitRow }) {
+export function ExitCard({
+  row,
+  highlighted = false,
+}: {
+  row: ExitRow;
+  /** Locked / best exit for this result — badge + stronger border. */
+  highlighted?: boolean;
+}) {
   return (
-    <li className="rounded-xl bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-5">
+    <li
+      className={
+        highlighted
+          ? "relative rounded-xl border-2 border-zinc-900 bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-5"
+          : "rounded-xl border border-transparent bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-5"
+      }
+    >
+      {highlighted ? (
+        <span className="absolute -top-2.5 left-3 rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          Your exit
+        </span>
+      ) : null}
       <div className="flex items-start gap-3 sm:gap-4">
         {row.exitNumber ? (
           <div
-            className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-zinc-900 text-white"
+            className={
+              highlighted
+                ? "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-zinc-900 text-white ring-2 ring-zinc-900 ring-offset-2"
+                : "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-zinc-900 text-white"
+            }
             aria-label={`Exit ${row.exitNumber}`}
           >
             <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-300">

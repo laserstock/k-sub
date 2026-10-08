@@ -281,13 +281,125 @@ export function exitsForDestination(
 
   const landmarkSlug = destination.slug;
   const facKo = destination.labelKo;
-  return rows.filter((row) => {
+  const facEn = destination.labelEn;
+  let matched = rows.filter((row) => {
     if (facKo && row.facilityKo === facKo) return true;
+    if (facEn && row.facilityEn === facEn) return true;
     return (
       stationSlug(row.facilityEn || row.facilityKo, row.facilityKo) ===
       landmarkSlug
     );
   });
+
+  // Prefer the station the search option was built from (same facility can appear at 2 stations)
+  if (destination.stationKo) {
+    const scoped = matched.filter((r) => r.stationKo === destination.stationKo);
+    if (scoped.length) matched = scoped;
+  } else if (destination.stationEn) {
+    const scoped = matched.filter(
+      (r) =>
+        englishStationName(r.stationKo, r.stationEn) === destination.stationEn ||
+        r.stationEn === destination.stationEn,
+    );
+    if (scoped.length) matched = scoped;
+  }
+
+  return matched;
+}
+
+function exitRowKey(row: ExitRow): string {
+  return `${row.stationKo}|${row.exitNumber}|${row.facilityEn}|${row.facilityKo}`;
+}
+
+/** Put the locked facility exit first, then other exits at the same station. */
+function prioritizeLockedExit(
+  stationRows: ExitRow[],
+  locked: ExitRow,
+): ExitRow[] {
+  const lockKey = exitRowKey(locked);
+  const rest = stationRows.filter((r) => exitRowKey(r) !== lockKey);
+  const sameExit = rest.filter((r) => r.exitNumber === locked.exitNumber);
+  const other = rest.filter((r) => r.exitNumber !== locked.exitNumber);
+  return [locked, ...sameExit, ...other];
+}
+
+export type ExitGuideAnswer = {
+  arrivalEn: string;
+  arrivalKo: string;
+  best: ExitRow | null;
+  /** Recommended list (locked exit first when landmark). */
+  highlights: ExitRow[];
+  /** True when To was a facility and Best Exit is locked to that row. */
+  locked: boolean;
+  landmarkLabelEn: string | null;
+  landmarkLabelKo: string | null;
+};
+
+/**
+ * One clear answer for the result page.
+ * Landmark To → lock Best Exit to that facility’s exit at its station.
+ * Station To → first unique exit highlight (heuristic).
+ */
+export function resolveExitGuide(
+  rows: ExitRow[],
+  destination: SearchOption,
+): ExitGuideAnswer {
+  if (destination.kind === "landmark") {
+    const matched = exitsForDestination(rows, destination);
+    const best =
+      matched.find((r) => r.exitNumber.trim()) ?? matched[0] ?? null;
+
+    const arrivalKo =
+      best?.stationKo ||
+      destination.stationKo ||
+      matched[0]?.stationKo ||
+      "";
+    const arrivalEnRaw =
+      best?.stationEn ||
+      destination.stationEn ||
+      matched[0]?.stationEn ||
+      "";
+    const arrivalEn =
+      englishStationName(arrivalKo, arrivalEnRaw) ||
+      destination.stationEn ||
+      arrivalKo;
+
+    const stationRows = arrivalKo
+      ? rows.filter((r) => r.stationKo === arrivalKo)
+      : matched;
+
+    const ordered = best
+      ? prioritizeLockedExit(
+          stationRows.length ? stationRows : matched,
+          best,
+        )
+      : stationRows;
+    const highlights = uniqueExitHighlights(ordered, 10);
+
+    return {
+      arrivalEn,
+      arrivalKo: arrivalKo || arrivalEn,
+      best,
+      highlights,
+      locked: Boolean(best),
+      landmarkLabelEn: destination.labelEn || best?.facilityEn || null,
+      landmarkLabelKo: destination.labelKo || best?.facilityKo || null,
+    };
+  }
+
+  const destExits = exitsForDestination(rows, destination);
+  const highlights = uniqueExitHighlights(destExits, 10);
+  const best = highlights[0] ?? null;
+
+  return {
+    arrivalEn: destination.labelEn,
+    arrivalKo: destination.labelKo,
+    best,
+    highlights,
+    locked: false,
+    landmarkLabelEn: best?.facilityEn || null,
+    landmarkLabelKo: best?.facilityKo || null,
+  };
 }
 
 export function exitsForStationSlug(
