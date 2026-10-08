@@ -28,62 +28,71 @@ export default async function Home() {
   );
 
   return (
-    <main className="min-h-full flex-1 bg-zinc-100">
-      <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-        <header className="mb-6 sm:mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-            Seoul Subway Exit Guide
-          </h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-600 sm:text-base">
-            Choose a departure station and a destination — stations or landmarks
-            like N Seoul Tower — then find your route.
-          </p>
-          <p className="mt-1 text-sm text-zinc-500">
-            출발역과 도착지(역·랜드마크)를 고르면 안내 페이지로 이동합니다
-            {!error && stationResult.distinctCount > 0 ? (
-              <span className="ml-1 text-zinc-400">
-                · {stationResult.distinctCount} stations
-              </span>
-            ) : null}
-          </p>
-        </header>
+    <main className="min-h-full flex-1">
+      {/* First viewport: one composition — brand + promise + search */}
+      <section className="relative mx-auto flex w-full max-w-3xl flex-col px-5 pb-10 pt-12 sm:px-8 sm:pb-14 sm:pt-16">
+        <p className="anim-rise text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--rail)]">
+          For visitors · 외국인 출구 안내
+        </p>
 
-        {error ? (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl border border-red-200 bg-white px-4 py-4 text-sm text-red-800 shadow-sm"
-          >
-            <p className="font-semibold">Could not load exit data</p>
-            <p className="mt-1 font-medium">데이터를 불러오지 못했습니다</p>
-            <p className="mt-2 whitespace-pre-wrap text-red-700">{error}</p>
-          </div>
-        ) : (
-          <RouteSearch options={options} exampleSlug={exampleSlug} />
-        )}
+        <h1 className="font-display anim-rise mt-4 max-w-[14ch] text-[2.65rem] font-extrabold leading-[0.95] tracking-tight text-ink sm:text-6xl sm:leading-[0.92]">
+          Seoul Subway Exit Guide
+        </h1>
 
-        <section className="mt-10 sm:mt-12">
-          <div className="mb-4 flex items-end justify-between gap-3">
+        <p className="anim-rise-delay mt-5 max-w-md text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+          Know which station and exit to use — before you surface into the wrong
+          street.
+        </p>
+
+        <div className="anim-rise-delay mt-9 sm:mt-10">
+          {error ? (
+            <div
+              role="alert"
+              className="rounded-2xl border border-red-200/80 bg-white/90 px-4 py-4 text-sm text-red-900 shadow-sm backdrop-blur-sm"
+            >
+              <p className="font-semibold">Could not load exit data</p>
+              <p className="mt-1 text-[var(--muted)]">
+                데이터를 불러오지 못했습니다
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-red-800/90">{error}</p>
+            </div>
+          ) : (
+            <RouteSearch options={options} exampleSlug={exampleSlug} />
+          )}
+        </div>
+
+        {!error && stationResult.distinctCount > 0 ? (
+          <p className="mt-5 text-xs text-[var(--muted)]">
+            {stationResult.distinctCount} stations · landmarks from exit
+            facilities
+          </p>
+        ) : null}
+      </section>
+
+      {/* Below the fold */}
+      <section className="border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--paper)_70%,transparent)]">
+        <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
+          <div className="mb-6 flex items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900">
+              <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
                 Popular exits
               </h2>
-              <p className="mt-1 text-sm text-zinc-500">인기 출구 안내</p>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Browse nearby landmarks by exit
+              </p>
             </div>
             <Link
               href={`/routes/${exampleSlug}`}
-              className="text-sm font-medium text-zinc-700 underline-offset-2 hover:underline"
+              className="shrink-0 text-sm font-semibold text-[var(--rail)] underline-offset-4 transition hover:underline"
             >
               Sample route
             </Link>
           </div>
 
           {!error && popular.rows.length === 0 ? (
-            <div className="rounded-xl bg-white px-4 py-10 text-center shadow-sm">
-              <p className="text-sm font-medium text-zinc-700">
+            <div className="rounded-2xl bg-white/80 px-4 py-10 text-center">
+              <p className="text-sm font-medium text-ink">
                 No exit information to show.
-              </p>
-              <p className="mt-1 text-sm text-zinc-500">
-                표시할 출구 정보가 없습니다.
               </p>
             </div>
           ) : null}
@@ -98,8 +107,8 @@ export default async function Home() {
               ))}
             </ul>
           ) : null}
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

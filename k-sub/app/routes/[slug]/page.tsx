@@ -62,27 +62,26 @@ export default async function RoutePage({ params }: PageProps) {
 
   if (!from || !to) {
     return (
-      <main className="min-h-full flex-1 bg-zinc-100">
-        <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-          <p className="text-sm text-zinc-500">
-            <Link href="/" className="font-medium text-zinc-800 hover:underline">
+      <main className="min-h-full flex-1">
+        <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
+          <p className="text-sm text-[var(--muted)]">
+            <Link
+              href="/"
+              className="font-semibold text-ink underline-offset-4 hover:underline"
+            >
               ← Back to search
             </Link>
           </p>
-          <div className="mt-6 rounded-xl bg-white px-5 py-8 shadow-md shadow-zinc-200/80">
-            <h1 className="text-2xl font-bold text-zinc-900">
+          <div className="mt-8">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
               Exit guide not found
             </h1>
-            <p className="mt-2 text-sm text-zinc-600">
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--muted)]">
               We could not match{" "}
-              <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">
+              <code className="rounded bg-white/80 px-1.5 py-0.5 text-xs text-ink">
                 {slug}
               </code>{" "}
-              to stations or landmarks in the data.
-            </p>
-            <p className="mt-1 text-sm text-zinc-500">
-              데이터에서 출발/도착지를 찾지 못했습니다. 홈에서 다시 검색해
-              주세요.
+              to stations or landmarks. Try searching again from home.
             </p>
           </div>
         </div>
@@ -92,8 +91,6 @@ export default async function RoutePage({ params }: PageProps) {
 
   const guide = resolveExitGuide(rows, to);
   const bestExit = guide.best?.exitNumber?.trim() || "—";
-  const heroExit =
-    bestExit === "—" ? "Exit —" : `Exit ${bestExit}`;
   const landmarkForGuide =
     to.kind === "landmark"
       ? guide.landmarkLabelEn || to.labelEn
@@ -109,85 +106,113 @@ export default async function RoutePage({ params }: PageProps) {
     : null;
 
   return (
-    <main className="min-h-full flex-1 bg-zinc-100">
-      <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
-        <p className="text-sm text-zinc-500">
-          <Link href="/" className="font-medium text-zinc-800 hover:underline">
+    <main className="min-h-full flex-1">
+      <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+        <p className="text-sm text-[var(--muted)]">
+          <Link
+            href="/"
+            className="font-semibold text-ink underline-offset-4 transition hover:text-[var(--rail)] hover:underline"
+          >
             ← Back to search
           </Link>
         </p>
 
-        {/* One clear answer — first screen */}
-        <header className="mt-5 mb-5 sm:mb-7">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Seoul subway exit guide
+        {/* Visual climax: one-line exit answer + signal exit badge */}
+        <header className="anim-rise mt-8 sm:mt-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--rail)]">
+            Seoul Subway Exit Guide
           </p>
-          <h1 className="mt-3 text-[1.65rem] font-bold leading-tight tracking-tight text-zinc-900 sm:text-4xl sm:leading-tight">
-            Get off at {guide.arrivalEn}{" "}
-            <span className="text-zinc-400" aria-hidden>
-              →
-            </span>{" "}
-            {heroExit}
-          </h1>
-          {to.kind === "landmark" ? (
-            <p className="mt-2 text-base font-medium text-zinc-700 sm:text-lg">
-              for {to.labelEn}
-            </p>
-          ) : landmarkForGuide ? (
-            <p className="mt-2 text-sm text-zinc-600 sm:text-base">
-              near {landmarkForGuide}
-            </p>
-          ) : null}
-          <p className="mt-2 text-sm text-zinc-500">
-            From {from.labelEn} ({from.labelKo})
-            {to.labelKo ? ` · ${to.labelKo}` : null}
-          </p>
+
+          <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-[2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl sm:leading-[1.02]">
+                Get off at {guide.arrivalEn}
+                <span className="mx-2 text-[var(--rail)]" aria-hidden>
+                  →
+                </span>
+                <span className="whitespace-nowrap">
+                  Exit {bestExit}
+                </span>
+              </h1>
+              {to.kind === "landmark" ? (
+                <p className="mt-3 text-lg font-medium text-[var(--ink-soft)] sm:text-xl">
+                  for {to.labelEn}
+                </p>
+              ) : landmarkForGuide ? (
+                <p className="mt-3 text-base text-[var(--muted)] sm:text-lg">
+                  near {landmarkForGuide}
+                </p>
+              ) : null}
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                From {from.labelEn}
+                {from.labelKo ? (
+                  <span className="text-[var(--muted)]/80">
+                    {" "}
+                    · {from.labelKo}
+                  </span>
+                ) : null}
+              </p>
+            </div>
+
+            {bestExit !== "—" ? (
+              <div
+                className="anim-exit-pop flex h-[5.5rem] w-[5.5rem] shrink-0 flex-col items-center justify-center rounded-2xl bg-[var(--signal)] text-[var(--signal-ink)] shadow-[0_16px_40px_-16px_rgba(240,180,41,0.65)] sm:h-28 sm:w-28"
+                aria-hidden
+              >
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">
+                  Exit
+                </span>
+                <span className="font-display text-4xl font-extrabold leading-none sm:text-5xl">
+                  {bestExit}
+                </span>
+              </div>
+            ) : null}
+          </div>
         </header>
 
         {error ? (
           <div
             role="alert"
-            className="mb-6 rounded-xl border border-red-200 bg-white px-4 py-4 text-sm text-red-800 shadow-sm"
+            className="mt-8 rounded-2xl border border-red-200/80 bg-white/90 px-4 py-4 text-sm text-red-900"
           >
             <p className="font-semibold">Could not load exit data</p>
             <p className="mt-2 whitespace-pre-wrap">{error}</p>
           </div>
         ) : null}
 
-        <section className="rounded-2xl bg-white p-5 shadow-md shadow-zinc-200/80 sm:p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        {/* Quick guide + Maps — secondary to hero, Maps unmistakable */}
+        <section className="anim-rise-delay mt-10 border-t border-[var(--line)] pt-8">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
             Quick guide
           </h2>
 
-          <dl className="mt-4 space-y-4">
+          <dl className="mt-5 grid gap-6 sm:grid-cols-2">
             <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                Destination Station · 도착역
+              <dt className="text-xs font-medium text-[var(--muted)]">
+                Destination station
               </dt>
-              <dd className="mt-1 text-2xl font-bold text-zinc-900">
+              <dd className="font-display mt-1 text-2xl font-bold tracking-tight text-ink">
                 {guide.arrivalEn}
               </dd>
-              <dd className="text-sm text-zinc-500">{guide.arrivalKo}</dd>
+              <dd className="mt-0.5 text-sm text-[var(--muted)]">
+                {guide.arrivalKo}
+              </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                Best Exit
-                {landmarkForGuide ? ` for ${landmarkForGuide}` : ""} · 추천
-                출구
+              <dt className="text-xs font-medium text-[var(--muted)]">
+                Best exit
+                {landmarkForGuide ? ` for ${landmarkForGuide}` : ""}
               </dt>
-              <dd className="mt-1 text-3xl font-bold text-zinc-900">
+              <dd className="font-display mt-1 text-2xl font-bold tracking-tight text-ink">
                 {bestExit === "—" ? "—" : `Exit ${bestExit}`}
               </dd>
               {to.kind === "landmark" && guide.landmarkLabelKo ? (
-                <dd className="mt-0.5 text-sm text-zinc-500">
+                <dd className="mt-0.5 text-sm text-[var(--muted)]">
                   {guide.landmarkLabelKo}
                 </dd>
-              ) : guide.best?.facilityKo && to.kind === "station" ? (
-                <dd className="mt-0.5 text-sm text-zinc-500">
+              ) : guide.best?.facilityEn && to.kind === "station" ? (
+                <dd className="mt-0.5 text-sm text-[var(--muted)]">
                   {guide.best.facilityEn}
-                  {guide.best.facilityKo
-                    ? ` · ${guide.best.facilityKo}`
-                    : null}
                 </dd>
               ) : null}
             </div>
@@ -197,35 +222,33 @@ export default async function RoutePage({ params }: PageProps) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1a73e8] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1558b0] active:scale-[0.99]"
+            className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[var(--maps)] px-5 py-4 text-[15px] font-bold text-white shadow-[0_14px_36px_-14px_rgba(26,115,232,0.7)] transition hover:bg-[var(--maps-hover)] active:scale-[0.99] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--maps)_40%,transparent)]"
           >
-            <span aria-hidden>🗺️</span>
             Open in Google Maps
-            <span className="font-normal text-blue-100">
+            <span className="font-medium text-white/80">
               구글 맵으로 경로 보기
             </span>
           </a>
         </section>
 
-        <section className="mt-8 sm:mt-10">
-          <h2 className="text-lg font-semibold text-zinc-900">
-            Recommended exits near your destination
+        <section className="mt-14 sm:mt-16">
+          <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Recommended exits nearby
           </h2>
-          <p className="mt-1 text-sm text-zinc-500">도착지 근처 추천 출구</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Other exits at this station
+          </p>
 
           {!error && guide.highlights.length === 0 ? (
-            <div className="mt-4 rounded-xl bg-white px-4 py-8 text-center shadow-sm">
-              <p className="text-sm font-medium text-zinc-700">
+            <div className="mt-5 rounded-2xl bg-white/80 px-4 py-8 text-center">
+              <p className="text-sm font-medium text-ink">
                 No exit rows matched this destination yet.
-              </p>
-              <p className="mt-1 text-sm text-zinc-500">
-                이 도착지에 맞는 출구 데이터가 없습니다.
               </p>
             </div>
           ) : null}
 
           {guide.highlights.length > 0 ? (
-            <ul className="mt-5 flex flex-col gap-4 sm:gap-5">
+            <ul className="mt-6 flex flex-col gap-4">
               {guide.highlights.map((row, index) => {
                 const key = `${row.stationKo}|${row.exitNumber}|${row.facilityEn}|${row.facilityKo}`;
                 const isLocked =
@@ -241,8 +264,6 @@ export default async function RoutePage({ params }: PageProps) {
             </ul>
           ) : null}
         </section>
-
-        <p className="mt-8 text-xs text-zinc-400">/routes/{slug}</p>
       </div>
     </main>
   );

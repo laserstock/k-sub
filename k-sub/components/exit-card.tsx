@@ -14,61 +14,63 @@ export function ExitCard({
     <li
       className={
         highlighted
-          ? "relative rounded-xl border-2 border-zinc-900 bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-5"
-          : "rounded-xl border border-transparent bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-5"
+          ? "relative rounded-2xl border-2 border-ink bg-white p-4 sm:p-5"
+          : "rounded-2xl border border-[var(--line)] bg-white/85 p-4 backdrop-blur-sm sm:p-5"
       }
     >
       {highlighted ? (
-        <span className="absolute -top-2.5 left-3 rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+        <span className="absolute -top-2.5 left-4 rounded-md bg-[var(--signal)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--signal-ink)]">
           Your exit
         </span>
       ) : null}
-      <div className="flex items-start gap-3 sm:gap-4">
+      <div className="flex items-start gap-3.5 sm:gap-4">
         {row.exitNumber ? (
           <div
             className={
               highlighted
-                ? "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-zinc-900 text-white ring-2 ring-zinc-900 ring-offset-2"
-                : "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-zinc-900 text-white"
+                ? "flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--signal)] text-[var(--signal-ink)]"
+                : "flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-ink text-white"
             }
             aria-label={`Exit ${row.exitNumber}`}
           >
-            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-300">
+            <span
+              className={
+                highlighted
+                  ? "text-[9px] font-bold uppercase tracking-wider text-[var(--signal-ink)]/70"
+                  : "text-[9px] font-bold uppercase tracking-wider text-white/55"
+              }
+            >
               Exit
             </span>
-            <span className="text-lg font-bold leading-none">
+            <span className="font-display text-xl font-extrabold leading-none">
               {row.exitNumber}
             </span>
           </div>
         ) : null}
-        <div className="min-w-0 flex-1 space-y-3">
+        <div className="min-w-0 flex-1 space-y-3.5">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              <span className="text-zinc-500">Station</span>
-              <span className="mx-1.5 text-zinc-300">·</span>
-              <span>역명</span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+              Station
             </p>
-            <p className="mt-1 text-base font-semibold text-zinc-900 sm:text-lg">
+            <p className="mt-1 text-base font-bold text-ink sm:text-lg">
               {displayValue(row.stationEn)}
             </p>
-            <p className="mt-0.5 text-sm text-zinc-600">
+            <p className="mt-0.5 text-sm text-[var(--muted)]">
               {displayValue(row.stationKo)}
             </p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              <span className="text-zinc-500">Nearby</span>
-              <span className="mx-1.5 text-zinc-300">·</span>
-              <span>출구별 주요시설명</span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+              Nearby
             </p>
-            <p className="mt-1 text-base font-semibold text-zinc-900 sm:text-lg">
+            <p className="mt-1 text-base font-bold text-ink sm:text-lg">
               {displayValue(row.facilityEn)}
             </p>
-            <p className="mt-0.5 text-sm text-zinc-600">
+            <p className="mt-0.5 text-sm text-[var(--muted)]">
               {displayValue(row.facilityKo)}
             </p>
             {row.facilityKo ? (
-              <div className="mt-2">
+              <div className="mt-2.5">
                 <CopyKoreanButton koreanName={row.facilityKo} />
               </div>
             ) : null}

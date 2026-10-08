@@ -22,7 +22,6 @@ export function CopyKoreanButton({
       await navigator.clipboard.writeText(koreanName.trim());
       setCopied(true);
     } catch {
-      // Fallback for older browsers
       const el = document.createElement("textarea");
       el.value = koreanName.trim();
       el.style.position = "fixed";
@@ -40,14 +39,16 @@ export function CopyKoreanButton({
       <button
         type="button"
         onClick={onCopy}
-        className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900 active:scale-[0.98]"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-2.5 py-1.5 text-xs font-semibold text-ink transition hover:border-[var(--rail)] hover:bg-white hover:text-[var(--rail)] active:scale-[0.98]"
       >
-        <span aria-hidden>📋</span>
+        <span aria-hidden className="text-[11px] opacity-70">
+          📋
+        </span>
         Copy Name in Korean
       </button>
       <span
         role="status"
-        className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white shadow transition duration-200 ${
+        className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-ink px-2 py-1 text-[11px] font-semibold text-white shadow transition duration-200 ${
           copied ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
         }`}
       >

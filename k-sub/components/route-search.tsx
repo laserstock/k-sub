@@ -70,7 +70,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <strong className="font-bold text-zinc-950">
+      <strong className="font-bold text-ink">
         {text.slice(idx, idx + q.length)}
       </strong>
       {text.slice(idx + q.length)}
@@ -97,7 +97,7 @@ function SuggestionList({
         <ul
           id={id}
           role="listbox"
-          className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
+          className="relative z-10 mt-1.5 max-h-56 w-full overflow-auto rounded-xl border border-[var(--line)] bg-white py-1.5 shadow-[0_12px_40px_-12px_rgba(12,27,42,0.25)]"
         >
           {children}
         </ul>
@@ -143,14 +143,20 @@ function OptionField({
     !value.trim() &&
     !!emptyRecommendations?.length &&
     !!onPickRecommendation;
-  const showSuggestions = open && value.trim().length > 0 && suggestions.length > 0;
+  const showSuggestions =
+    open && value.trim().length > 0 && suggestions.length > 0;
   const showList = showEmptyRecs || showSuggestions;
 
   return (
     <div className="min-w-0 flex-1">
-      <label htmlFor={inputId} className="block text-sm font-medium text-zinc-800">
+      <label
+        htmlFor={inputId}
+        className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
+      >
         {labelEn}
-        <span className="ml-1.5 font-normal text-zinc-500">{labelKo}</span>
+        <span className="ml-2 font-medium normal-case tracking-normal text-[var(--muted)]/80">
+          {labelKo}
+        </span>
       </label>
       <input
         id={inputId}
@@ -173,7 +179,7 @@ function OptionField({
             onClose();
           }
         }}
-        className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-900/10 transition placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:ring-2"
+        className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3.5 py-3 text-[15px] font-medium text-ink outline-none transition placeholder:font-normal placeholder:text-[var(--muted)]/55 focus:border-[var(--rail)] focus:bg-white focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_22%,transparent)]"
       />
 
       <SuggestionList id={listId} open={showList}>
@@ -182,7 +188,7 @@ function OptionField({
               <li key={label} role="option">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--mist)]"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     onPickRecommendation(label);
@@ -193,10 +199,10 @@ function OptionField({
                     📍
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-zinc-900">
+                    <span className="block text-sm font-semibold text-ink">
                       {label}
                     </span>
-                    <span className="block text-xs text-zinc-500">
+                    <span className="block text-xs text-[var(--muted)]">
                       Popular landmark
                     </span>
                   </span>
@@ -210,7 +216,7 @@ function OptionField({
               <li key={option.id} role="option">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--mist)]"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     onPick(option);
@@ -221,15 +227,15 @@ function OptionField({
                     {option.kind === "station" ? "🚇" : "📍"}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-zinc-900">
+                    <span className="block text-sm font-semibold text-ink">
                       <HighlightMatch
                         text={option.labelEn}
                         query={queryForHighlight}
                       />
                     </span>
-                    <span className="block text-xs text-zinc-500">
+                    <span className="block text-xs text-[var(--muted)]">
                       {option.labelKo}
-                      <span className="mx-1 text-zinc-300">·</span>
+                      <span className="mx-1 opacity-40">·</span>
                       {option.kind === "station" ? "Station" : "Landmark"}
                     </span>
                   </span>
@@ -365,12 +371,12 @@ export function RouteSearch({ options, exampleSlug }: Props) {
     <form
       ref={formRef}
       onSubmit={onSubmit}
-      className="overflow-visible rounded-2xl bg-white p-4 shadow-md shadow-zinc-200/80 sm:p-6"
+      className="overflow-visible rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-[0_20px_50px_-24px_rgba(12,27,42,0.35)] backdrop-blur-md sm:p-6"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
         <OptionField
           inputId={`${baseId}-from`}
-          labelEn="From (Departure Station)"
+          labelEn="From"
           labelKo="출발역"
           placeholder="e.g. Jonggak"
           value={fromQuery}
@@ -389,13 +395,13 @@ export function RouteSearch({ options, exampleSlug }: Props) {
           queryForHighlight={fromQuery}
         />
 
-        <div className="flex items-center justify-center sm:mt-8 sm:px-1">
+        <div className="flex items-center justify-center sm:mt-9 sm:px-0.5">
           <button
             type="button"
             onClick={swapEnds}
             aria-label="Swap From and To"
             title="Swap From and To"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-lg text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper)] text-lg text-ink transition hover:border-[var(--rail)] hover:bg-white hover:text-[var(--rail)] active:scale-95 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_22%,transparent)]"
           >
             <span aria-hidden className="sm:hidden">
               ⇅
@@ -408,9 +414,9 @@ export function RouteSearch({ options, exampleSlug }: Props) {
 
         <OptionField
           inputId={`${baseId}-to`}
-          labelEn="To (Destination / Landmark)"
-          labelKo="도착 / 랜드마크"
-          placeholder="e.g. Seoul Station or N Seoul Tower"
+          labelEn="To"
+          labelKo="도착 · 랜드마크"
+          placeholder="Station or landmark"
           value={toQuery}
           onChange={(next) => {
             setToQuery(next);
@@ -431,27 +437,27 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       </div>
 
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-[var(--danger)]">
           {error}
         </p>
       ) : null}
 
-      <div className="relative z-20 mt-5 flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-20 mt-5 flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--rail)] px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-[var(--rail-hover)] active:scale-[0.99] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_35%,transparent)] sm:w-auto"
         >
-          Find route
-          <span className="ml-2 font-normal text-zinc-300">길찾기</span>
+          Find your exit
+          <span className="ml-2 font-medium text-white/75">출구 찾기</span>
         </button>
         {exampleSlug ? (
-          <p className="text-xs text-zinc-500">
-            Try example:{" "}
+          <p className="text-xs text-[var(--muted)]">
+            Try{" "}
             <a
               href={`/routes/${exampleSlug}`}
-              className="font-medium text-zinc-800 underline-offset-2 hover:underline"
+              className="font-semibold text-ink underline-offset-2 hover:underline"
             >
-              /routes/{exampleSlug}
+              Jonggak → Seoul Station
             </a>
           </p>
         ) : null}
