@@ -29,8 +29,8 @@
   --color-rail: var(--rail);
   --color-signal: var(--signal);
   --color-muted: var(--muted);
-  --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -40,7 +40,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Metro-line atmosphere — cool mist + soft diagonal rails */
@@ -79,7 +79,7 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+  font-family: "Syne", "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
 @keyframes rise-in {
