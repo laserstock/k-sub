@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" data-scroll-behavior="smooth" className="h-full antialiased">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

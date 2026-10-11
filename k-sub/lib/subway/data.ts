@@ -88,17 +88,14 @@ async function fetchPagesEq(
   }
 }
 
-/** Cached full catalog (explicit columns). Used to build search index hourly. */
-const getCachedCatalogRaw = unstable_cache(
-  async (): Promise<RawResult> => fetchPages(EXIT_SELECT_COLUMNS),
-  ["subway-exits-catalog-v2"],
-  { revalidate: REVALIDATE_SECONDS, tags: ["subway-exits"] },
-);
-
+/**
+ * Full raw catalog is ~4MB — too large for Next unstable_cache (2MB cap).
+ * Only cache slim search index + per-station exit slices.
+ */
 const getCachedStationExitsRaw = unstable_cache(
   async (stationKo: string): Promise<RawResult> =>
     fetchPagesEq(EXIT_SELECT_COLUMNS, "역명", stationKo),
-  ["subway-exits-by-station-v2"],
+  ["subway-exits-by-station-v3"],
   { revalidate: REVALIDATE_SECONDS, tags: ["subway-exits"] },
 );
 
@@ -218,27 +215,60 @@ function buildIndexFromRows(raw: Record<string, unknown>[]): SearchIndex {
   };
 }
 
-const getCachedSearchIndex = unstable_cache(
-  async (): Promise<SearchIndex> => {
-    const { rows, error } = await getCachedCatalogRaw();
-    if (error) {
-      return {
-        options: [],
-        stations: [],
-        landmarks: [],
-        distinctStationCount: 0,
-        error,
-      };
+/**
+ * Search index is too large for Next unstable_cache (2MB). Use process memory TTL
+ * so one warm server avoids re-scanning ~10k rows on every click.
+ */
+type MemEntry<T> = { value: T; expiresAt: number };
+let searchIndexMem: MemEntry<SearchIndex> | null = null;
+
+async function buildSearchIndexFresh(): Promise<SearchIndex> {
+  const { rows, error } = await fetchPages(EXIT_SELECT_COLUMNS);
+  if (error) {
+    return {
+      options: [],
+      stations: [],
+      landmarks: [],
+      distinctStationCount: 0,
+      error,
+    };
+  }
+  return buildIndexFromRows(rows);
+}
+
+const getCachedFacilityHitsRaw = unstable_cache(
+  async (facilityKo: string, facilityEn: string): Promise<RawResult> => {
+    if (facilityKo) {
+      const byKo = await fetchPagesEq(
+        EXIT_SELECT_COLUMNS,
+        "출구별주요시설명",
+        facilityKo,
+      );
+      if (byKo.rows.length || byKo.error) return byKo;
     }
-    return buildIndexFromRows(rows);
+    if (facilityEn) {
+      return fetchPagesEq(EXIT_SELECT_COLUMNS, "출구시설_EN", facilityEn);
+    }
+    return { rows: [], error: null };
   },
-  ["subway-search-index-v2"],
+  ["subway-exits-by-facility-v1"],
   { revalidate: REVALIDATE_SECONDS, tags: ["subway-exits"] },
 );
 
-/** Home autocomplete: stations + landmarks (cached 1h). */
+/** Home autocomplete: stations + landmarks (in-memory TTL ~1h). */
 export async function getSearchIndex(): Promise<SearchIndex> {
-  return getCachedSearchIndex();
+  const now = Date.now();
+  if (searchIndexMem && searchIndexMem.expiresAt > now) {
+    return searchIndexMem.value;
+  }
+  const value = await buildSearchIndexFresh();
+  if (!value.error) {
+    searchIndexMem = {
+      value,
+      expiresAt: now + REVALIDATE_SECONDS * 1000,
+    };
+  }
+  return value;
 }
 
 export async function fetchAllStationOptions(): Promise<{
@@ -271,12 +301,12 @@ export async function fetchPopularExits(limit = 8): Promise<{
   return { rows: mapExitRows(rows), error: null };
 }
 
-/** @deprecated Prefer getSearchIndex / fetchExitsForStation */
+/** Uncached full scan — avoid on hot paths; prefer station/facility queries. */
 export async function fetchExitCatalog(): Promise<{
   rows: ExitRow[];
   error: string | null;
 }> {
-  const { rows, error } = await getCachedCatalogRaw();
+  const { rows, error } = await fetchPages(EXIT_SELECT_COLUMNS);
   if (error) return { rows: [], error };
   return { rows: mapExitRows(rows), error: null };
 }
@@ -474,31 +504,27 @@ export async function loadRoutePageData(
     return { from, to, guide: null, error: null };
   }
 
-  const stationKo =
-    to.kind === "station"
-      ? to.labelKo
-      : to.stationKo || "";
+  let stationKo =
+    to.kind === "station" ? to.labelKo : to.stationKo || "";
 
   let rows: ExitRow[] = [];
   let error: string | null = null;
 
-  if (stationKo) {
+  // Landmark: resolve facility → station, then load that station’s exits only
+  if (to.kind === "landmark" && !stationKo) {
+    const hits = await getCachedFacilityHitsRaw(
+      to.labelKo || "",
+      to.labelEn || "",
+    );
+    error = hits.error;
+    const mapped = mapExitRows(hits.rows);
+    stationKo = mapped[0]?.stationKo || "";
+  }
+
+  if (!error && stationKo) {
     const scoped = await fetchExitsForStation(stationKo);
     rows = scoped.rows;
     error = scoped.error;
-  }
-
-  // Landmark without stationKo on option — fall back to facility filter via catalog cache
-  if (!error && rows.length === 0 && to.kind === "landmark") {
-    const catalog = await fetchExitCatalog();
-    error = catalog.error;
-    rows = exitsForDestination(catalog.rows, to);
-    if (rows[0]?.stationKo) {
-      const stationFill = await fetchExitsForStation(rows[0].stationKo);
-      if (!stationFill.error && stationFill.rows.length) {
-        rows = stationFill.rows;
-      }
-    }
   }
 
   if (error) {
