@@ -11,3 +11,8 @@ npm install
 # .env.local 에 NEXT_PUBLIC_SUPABASE_URL / ANON_KEY
 npm run dev -- -p 43127
 ```
+
+## Vercel 배포
+저장소 **Root Directory를 `k-sub`로** 설정하세요.  
+환경변수: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+자세한 초보 가이드: Context `docs/deploy-vercel.md`

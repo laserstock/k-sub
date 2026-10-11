@@ -18,3 +18,7 @@ cd k-sub
 npm install
 npm run dev
 ```
+
+## 인터넷에 올리기 (Vercel)
+초보용 단계별 안내: Context의 `docs/deploy-vercel.md`  
+요약: Vercel에서 GitHub로 로그인 → 저장소 Import → **Root Directory = `k-sub`** → Supabase 환경변수 2개 추가 → Deploy.
