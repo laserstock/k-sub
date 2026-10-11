@@ -2,17 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExitCard } from "@/components/exit-card";
-import {
-  buildSearchOptions,
-  fetchExitCatalog,
-  findOptionBySlug,
-  resolveExitGuide,
-} from "@/lib/subway/data";
+import { loadRoutePageData } from "@/lib/subway/data";
 import { googleMapsDirectionsUrl } from "@/lib/subway/google-maps";
 import { parseRouteSlug, titleFromSlug } from "@/lib/subway/slug";
 import type { SearchOption } from "@/lib/subway/types";
 
-export const dynamic = "force-dynamic";
+/** Exit guides reuse cached station rows for ~1 hour. */
+export const revalidate = 3600;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -55,12 +51,12 @@ export default async function RoutePage({ params }: PageProps) {
     notFound();
   }
 
-  const { rows, error } = await fetchExitCatalog();
-  const options = buildSearchOptions(rows);
-  const from = findOptionBySlug(options, parts.fromSlug);
-  const to = findOptionBySlug(options, parts.toSlug);
+  const { from, to, guide, error } = await loadRoutePageData(
+    parts.fromSlug,
+    parts.toSlug,
+  );
 
-  if (!from || !to) {
+  if (!from || !to || !guide) {
     return (
       <main className="min-h-full flex-1">
         <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
@@ -83,13 +79,17 @@ export default async function RoutePage({ params }: PageProps) {
               </code>{" "}
               to stations or landmarks. Try searching again from home.
             </p>
+            {error ? (
+              <p className="mt-4 whitespace-pre-wrap text-sm text-red-800">
+                {error}
+              </p>
+            ) : null}
           </div>
         </div>
       </main>
     );
   }
 
-  const guide = resolveExitGuide(rows, to);
   const bestExit = guide.best?.exitNumber?.trim() || "—";
   const landmarkForGuide =
     to.kind === "landmark"
@@ -117,7 +117,6 @@ export default async function RoutePage({ params }: PageProps) {
           </Link>
         </p>
 
-        {/* Visual climax: one-line exit answer + signal exit badge */}
         <header className="anim-rise mt-8 sm:mt-10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--rail)]">
             Seoul Subway Exit Guide
@@ -130,9 +129,7 @@ export default async function RoutePage({ params }: PageProps) {
                 <span className="mx-2 text-[var(--rail)]" aria-hidden>
                   →
                 </span>
-                <span className="whitespace-nowrap">
-                  Exit {bestExit}
-                </span>
+                <span className="whitespace-nowrap">Exit {bestExit}</span>
               </h1>
               {to.kind === "landmark" ? (
                 <p className="mt-3 text-lg font-medium text-[var(--ink-soft)] sm:text-xl">
@@ -180,7 +177,6 @@ export default async function RoutePage({ params }: PageProps) {
           </div>
         ) : null}
 
-        {/* Quick guide + Maps — secondary to hero, Maps unmistakable */}
         <section className="anim-rise-delay mt-10 border-t border-[var(--line)] pt-8">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
             Quick guide

@@ -2,12 +2,17 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let client: SupabaseClient | null = null;
 
-/** Always hit Supabase fresh — avoid Next.js caching stale exit rows. */
-function noStoreFetch(
+/** Semi-static exit data — allow Next fetch cache / revalidate (not no-store). */
+const REVALIDATE_SECONDS = 3600;
+
+function cachedFetch(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(input, { ...init, cache: "no-store" });
+  return fetch(input, {
+    ...init,
+    next: { revalidate: REVALIDATE_SECONDS, tags: ["subway-exits"] },
+  });
 }
 
 export function getSupabaseClient(): SupabaseClient {
@@ -22,9 +27,11 @@ export function getSupabaseClient(): SupabaseClient {
 
   if (!client) {
     client = createClient(url, anonKey, {
-      global: { fetch: noStoreFetch },
+      global: { fetch: cachedFetch },
     });
   }
 
   return client;
 }
+
+export { REVALIDATE_SECONDS };

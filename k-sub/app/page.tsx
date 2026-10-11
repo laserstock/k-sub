@@ -1,25 +1,20 @@
 import Link from "next/link";
 import { ExitCard } from "@/components/exit-card";
 import { RouteSearch } from "@/components/route-search";
-import {
-  fetchAllStationOptions,
-  fetchLandmarkOptions,
-  fetchPopularExits,
-} from "@/lib/subway/data";
+import { fetchPopularExits, getSearchIndex } from "@/lib/subway/data";
 import { buildRouteSlug } from "@/lib/subway/slug";
 
-export const dynamic = "force-dynamic";
+/** Semi-static subway data — refresh at most hourly. */
+export const revalidate = 3600;
 
 export default async function Home() {
-  const [popular, stationResult, landmarkResult] = await Promise.all([
+  const [popular, index] = await Promise.all([
     fetchPopularExits(8),
-    fetchAllStationOptions(),
-    fetchLandmarkOptions(),
+    getSearchIndex(),
   ]);
 
-  const error =
-    popular.error || stationResult.error || landmarkResult.error;
-  const options = [...stationResult.stations, ...landmarkResult.landmarks];
+  const error = popular.error || index.error;
+  const options = index.options;
   const exampleSlug = buildRouteSlug(
     "Jonggak",
     "Seoul Station",
@@ -29,7 +24,6 @@ export default async function Home() {
 
   return (
     <main className="min-h-full flex-1">
-      {/* First viewport: one composition — brand + promise + search */}
       <section className="relative mx-auto flex min-h-[100svh] w-full max-w-3xl flex-col justify-center px-5 py-12 sm:px-8 sm:py-16">
         <p className="anim-rise text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--rail)]">
           For visitors · 외국인 출구 안내
@@ -61,15 +55,14 @@ export default async function Home() {
           )}
         </div>
 
-        {!error && stationResult.distinctCount > 0 ? (
+        {!error && index.distinctStationCount > 0 ? (
           <p className="mt-5 text-xs text-[var(--muted)]">
-            {stationResult.distinctCount} stations · landmarks from exit
+            {index.distinctStationCount} stations · landmarks from exit
             facilities
           </p>
         ) : null}
       </section>
 
-      {/* Below the fold */}
       <section className="border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--paper)_70%,transparent)]">
         <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
           <div className="mb-6 flex items-end justify-between gap-3">

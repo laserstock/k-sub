@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
   type FormEvent,
   type ReactNode,
 } from "react";
@@ -252,12 +253,14 @@ export function RouteSearch({ options, exampleSlug }: Props) {
   const router = useRouter();
   const baseId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
   const [fromQuery, setFromQuery] = useState("");
   const [toQuery, setToQuery] = useState("");
   const [fromOption, setFromOption] = useState<SearchOption | null>(null);
   const [toOption, setToOption] = useState<SearchOption | null>(null);
   const [activeField, setActiveField] = useState<ActiveField>(null);
   const [error, setError] = useState<string | null>(null);
+  const busy = isPending;
 
   const stationOptions = useMemo(
     () => options.filter((o) => o.kind === "station"),
@@ -339,6 +342,7 @@ export function RouteSearch({ options, exampleSlug }: Props) {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setActiveField(null);
     setError(null);
     const from = resolveOption(fromQuery, fromOption, true);
@@ -364,15 +368,33 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       from.labelKo,
       to.labelKo,
     );
-    router.push(`/routes/${slug}`);
+    startTransition(() => {
+      router.push(`/routes/${slug}`);
+    });
   }
 
   return (
     <form
       ref={formRef}
       onSubmit={onSubmit}
-      className="overflow-visible rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-[0_20px_50px_-24px_rgba(12,27,42,0.35)] backdrop-blur-md sm:p-6"
+      aria-busy={busy}
+      className="relative overflow-visible rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-[0_20px_50px_-24px_rgba(12,27,42,0.35)] backdrop-blur-md sm:p-6"
     >
+      {busy ? (
+        <div
+          className="absolute inset-0 z-30 flex flex-col gap-3 rounded-2xl bg-white/70 p-5 backdrop-blur-[2px] sm:p-6"
+          aria-live="polite"
+          aria-label="Loading exit guide"
+        >
+          <div className="h-3 w-24 animate-pulse rounded bg-[color-mix(in_srgb,var(--ink)_10%,transparent)]" />
+          <div className="h-11 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--ink)_8%,transparent)]" />
+          <div className="h-11 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--ink)_8%,transparent)]" />
+          <div className="mt-auto h-12 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--rail)_30%,transparent)]" />
+          <p className="text-center text-sm font-semibold text-ink">
+            Finding your exit…
+          </p>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
         <OptionField
           inputId={`${baseId}-from`}
@@ -399,9 +421,10 @@ export function RouteSearch({ options, exampleSlug }: Props) {
           <button
             type="button"
             onClick={swapEnds}
+            disabled={busy}
             aria-label="Swap From and To"
             title="Swap From and To"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper)] text-lg text-ink transition hover:border-[var(--rail)] hover:bg-white hover:text-[var(--rail)] active:scale-95 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_22%,transparent)]"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper)] text-lg text-ink transition hover:border-[var(--rail)] hover:bg-white hover:text-[var(--rail)] active:scale-95 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--rail)_22%,transparent)] disabled:pointer-events-none disabled:opacity-50"
           >
             <span aria-hidden className="sm:hidden">
               ⇅
@@ -445,10 +468,24 @@ export function RouteSearch({ options, exampleSlug }: Props) {
       <div className="relative z-20 mt-5 flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-[#0a7a6e] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_-12px_rgba(10,122,110,0.7)] transition hover:bg-[#08665c] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a7a6e]/40 sm:w-auto"
+          disabled={busy}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0a7a6e] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_-12px_rgba(10,122,110,0.7)] transition hover:bg-[#08665c] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a7a6e]/40 disabled:cursor-wait disabled:opacity-80 sm:w-auto"
         >
-          Find your exit
-          <span className="ml-2 font-medium text-white/80">출구 찾기</span>
+          {busy ? (
+            <>
+              <span
+                className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                aria-hidden
+              />
+              Finding exit…
+              <span className="font-medium text-white/80">찾는 중</span>
+            </>
+          ) : (
+            <>
+              Find your exit
+              <span className="ml-1 font-medium text-white/80">출구 찾기</span>
+            </>
+          )}
         </button>
         {exampleSlug ? (
           <p className="text-xs text-[var(--muted)]">
