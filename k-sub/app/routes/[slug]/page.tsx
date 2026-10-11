@@ -122,38 +122,19 @@ export default async function RoutePage({ params }: PageProps) {
             Seoul Subway Exit Guide
           </p>
 
-          <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
-            <div className="min-w-0 flex-1">
-              <h1 className="font-display text-[2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl sm:leading-[1.02]">
-                Get off at {guide.arrivalEn}
-                <span className="mx-2 text-[var(--rail)]" aria-hidden>
-                  →
-                </span>
-                <span className="whitespace-nowrap">Exit {bestExit}</span>
-              </h1>
-              {to.kind === "landmark" ? (
-                <p className="mt-3 text-lg font-medium text-[var(--ink-soft)] sm:text-xl">
-                  for {to.labelEn}
-                </p>
-              ) : landmarkForGuide ? (
-                <p className="mt-3 text-base text-[var(--muted)] sm:text-lg">
-                  near {landmarkForGuide}
-                </p>
-              ) : null}
-              <p className="mt-3 text-sm text-[var(--muted)]">
-                From {from.labelEn}
-                {from.labelKo ? (
-                  <span className="text-[var(--muted)]/80">
-                    {" "}
-                    · {from.labelKo}
-                  </span>
-                ) : null}
-              </p>
-            </div>
+          {/* Stack only — badge never sits beside H1 (avoids overlap on narrow widths) */}
+          <div className="mt-5">
+            <h1 className="font-display text-[2rem] font-extrabold leading-[1.15] tracking-tight text-ink sm:text-5xl sm:leading-[1.1]">
+              Get off at {guide.arrivalEn}
+              <span className="mx-2 text-[var(--rail)]" aria-hidden>
+                →
+              </span>
+              <span className="whitespace-nowrap">Exit {bestExit}</span>
+            </h1>
 
             {bestExit !== "—" ? (
               <div
-                className="anim-exit-pop flex h-[5.5rem] w-[5.5rem] shrink-0 flex-col items-center justify-center rounded-2xl bg-[var(--signal)] text-[var(--signal-ink)] shadow-[0_16px_40px_-16px_rgba(240,180,41,0.65)] sm:h-28 sm:w-28"
+                className="anim-exit-pop mt-5 inline-flex h-[5.25rem] w-[5.25rem] flex-col items-center justify-center rounded-2xl bg-[var(--signal)] text-[var(--signal-ink)] shadow-[0_16px_40px_-16px_rgba(240,180,41,0.65)] sm:mt-6 sm:h-28 sm:w-28"
                 aria-hidden
               >
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">
@@ -164,6 +145,25 @@ export default async function RoutePage({ params }: PageProps) {
                 </span>
               </div>
             ) : null}
+
+            {to.kind === "landmark" ? (
+              <p className="mt-4 text-lg font-medium text-[var(--ink-soft)] sm:text-xl">
+                for {to.labelEn}
+              </p>
+            ) : landmarkForGuide ? (
+              <p className="mt-4 text-base text-[var(--muted)] sm:text-lg">
+                near {landmarkForGuide}
+              </p>
+            ) : null}
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              From {from.labelEn}
+              {from.labelKo ? (
+                <span className="text-[var(--muted)]/80">
+                  {" "}
+                  · {from.labelKo}
+                </span>
+              ) : null}
+            </p>
           </div>
         </header>
 
