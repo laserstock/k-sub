@@ -7,15 +7,32 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/xml; charset=utf-8"
+          "value": "text/xml; charset=utf-8"
         },
         {
           "key": "Cache-Control",
-          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=0, s-maxage=3600, must-revalidate"
         },
         {
-          "key": "X-Robots-Tag",
-          "value": "all"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/sitemaps/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=3600, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     },
@@ -23,8 +40,12 @@
       "source": "/robots.txt",
       "headers": [
         {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
           "key": "Cache-Control",
-          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=0, s-maxage=3600, must-revalidate"
         }
       ]
     }
