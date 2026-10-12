@@ -273,24 +273,13 @@ async function main() {
   const slugs = buildSlugs(index);
   const xml = toXml(slugs);
 
+  await mkdir(join(root, "seo"), { recursive: true });
   await mkdir(join(root, "public", "sitemaps"), { recursive: true });
-  await writeFile(join(root, "public", "sitemap.xml"), xml, "utf8");
+  // seo/sitemap.xml is read by app/sitemap.xml/route.ts (clean headers for GSC)
+  await writeFile(join(root, "seo", "sitemap.xml"), xml, "utf8");
+  // Mirror for GSC cache-bust submit path
   await writeFile(join(root, "public", "sitemaps", "gsc.xml"), xml, "utf8");
-
-  const robots = `User-agent: *
-Allow: /
-
-User-agent: Googlebot
-Allow: /
-
-User-agent: Google-InspectionTool
-Allow: /
-
-Sitemap: ${SITE}/sitemap.xml
-Sitemap: ${SITE}/sitemaps/gsc.xml
-`;
-  await writeFile(join(root, "public", "robots.txt"), robots, "utf8");
-  console.log(`[generate-sitemap] wrote ${slugs.length + 1} URLs to public/sitemap.xml`);
+  console.log(`[generate-sitemap] wrote ${slugs.length + 1} URLs to seo/sitemap.xml`);
 }
 
 main().catch((err) => {
