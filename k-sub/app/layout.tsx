@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     description:
       "Know which station and exit to use before you surface into the wrong street.",
   },
+  verification: {
+    google: "vyP8LDpgTQv5HHEhCzg3AIpiUefABg4nLq1wCghHi_I",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
