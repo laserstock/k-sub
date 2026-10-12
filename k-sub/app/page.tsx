@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ExitCard } from "@/components/exit-card";
 import { RouteSearch } from "@/components/route-search";
@@ -6,6 +7,13 @@ import { buildRouteSlug } from "@/lib/subway/slug";
 
 /** Semi-static subway data — refresh at most hourly. */
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Seoul Subway Exit Guide",
+  description:
+    "Search From and To (stations or landmarks) to get the right Seoul subway exit — Google Maps and Korean name copy included.",
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   const [popular, index] = await Promise.all([

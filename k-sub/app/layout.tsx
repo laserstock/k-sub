@@ -1,10 +1,29 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  title: "Seoul Subway Exit Guide",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Seoul Subway Exit Guide",
+    template: "%s | Seoul Subway Exit Guide",
+  },
   description:
-    "Find the right subway exit in Seoul — station, exit number, and Google Maps for foreign visitors.",
+    "Find the right Seoul subway station and exit — for foreign visitors. Search From/To, open Google Maps, copy Korean names.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Seoul Subway Exit Guide",
+    title: "Seoul Subway Exit Guide",
+    description:
+      "Know which station and exit to use before you surface into the wrong street.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

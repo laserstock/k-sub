@@ -38,9 +38,19 @@ export async function generateMetadata({
 
   const fromTitle = titleFromSlug(parts.fromSlug);
   const toTitle = titleFromSlug(parts.toSlug);
+  const title = `Exit for ${toTitle} from ${fromTitle}`;
+  const description = `Get off at the right station and exit for ${toTitle} when coming from ${fromTitle}. Seoul subway exit guide for visitors.`;
   return {
-    title: `Exit for ${toTitle} from ${fromTitle} | Seoul Subway Exit Guide`,
-    description: `Which station and exit to use for ${toTitle} when coming from ${fromTitle}.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/routes/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+    },
   };
 }
 
