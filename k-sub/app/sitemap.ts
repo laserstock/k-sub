@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site";
 import { buildSitemapRouteSlugs } from "@/lib/subway/sitemap-routes";
 
+/** Build at deploy time so Googlebot never waits on a cold Supabase fetch. */
+export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
