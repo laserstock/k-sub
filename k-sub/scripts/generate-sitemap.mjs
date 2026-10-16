@@ -9,11 +9,15 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const SITE =
-  (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://k-sub.vercel.app").replace(
-    /\/$/,
-    "",
-  );
+// Prefer NEXT_PUBLIC_SITE_URL (same as lib/site.ts). Keep vercel.app fallback
+// until Production env is set to https://k-sub.com after Domains Valid.
+const SITE = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.SITE_URL ||
+  "https://k-sub.vercel.app"
+)
+  .trim()
+  .replace(/\/$/, "");
 
 const HUB_HINTS = [
   "jonggak",
