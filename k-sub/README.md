@@ -16,3 +16,13 @@ npm run dev -- -p 43127
 저장소 **Root Directory를 `k-sub`로** 설정하세요.  
 환경변수: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
 자세한 초보 가이드: Context `docs/deploy-vercel.md`
+
+### 사이트 주소 (sitemap / robots / canonical)
+기본값: `https://k-sub.vercel.app` (`lib/site.ts` → `getSiteUrl()`).  
+커스텀 도메인 `k-sub.com`이 Vercel Domains에서 **Valid**가 되면 Production에:
+
+```
+NEXT_PUBLIC_SITE_URL=https://k-sub.com
+```
+
+추가 후 **Redeploy**. (그 전에는 env를 넣지 마세요 — vercel.app SEO URL이 유지됩니다.)
